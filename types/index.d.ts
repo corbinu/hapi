@@ -43,6 +43,48 @@ import Podium = require("podium");
  * [See docs](https://github.com/hapijs/hapi/blob/master/API.md#-serverregistrations)
  */
 
+
+export interface BoomOutput {
+    /** statusCode - the HTTP status code (typically 4xx or 5xx). */
+    statusCode: number;
+    /** headers - an object containing any HTTP headers where each key is a header name and value is the header content. (Limited value type to string https://github.com/hapijs/boom/issues/151 ) */
+    headers: {[index: string]: string};
+    /** payload - the formatted object used as the response payload (stringified). Can be directly manipulated but any changes will be lost if reformat() is called. Any content allowed and by default includes the following content: */
+    payload: BoomPayload;
+}
+
+export interface BoomPayload {
+    /** statusCode - the HTTP status code, derived from error.output.statusCode. */
+    statusCode: number;
+    /** error - the HTTP status message (e.g. 'Bad Request', 'Internal Server Error') derived from statusCode. */
+    error: string;
+    /** message - the error message derived from error.message. */
+    message: string;
+    /**
+     * "Every key/value pair will be included ... in the response payload under the attributes key."
+     * [see docs](https://github.com/hapijs/boom#boomunauthorizedmessage-scheme-attributes)
+     */
+    attributes?: any;
+    // Excluded this to aid typing of the other values.  See tests for example casting to a custom interface to manipulate the payload
+    // [anyContent: string]: any;
+}
+export interface BoomError<Data = any> extends Error {
+    /** isBoom - if true, indicates this is a Boom object instance. */
+    isBoom: boolean;
+    /** isServer - convenience bool indicating status code >= 500. */
+    isServer: boolean;
+    /** message - the error message. */
+    message: string;
+    /** output - the formatted response. Can be directly manipulated after object construction to return a custom error response. Allowed root keys: */
+    output: BoomOutput;
+    /** reformat() - rebuilds error.output using the other object properties. */
+    reformat: () => string;
+    /** "If message is unset, the 'error' segment of the header will not be present and isMissing will be true on the error object." mentioned in @see {@link https://github.com/hapijs/boom#boomunauthorizedmessage-scheme-attributes} */
+    isMissing?: boolean;
+    /** https://github.com/hapijs/boom#createstatuscode-message-data and https://github.com/hapijs/boom/blob/v4.3.0/lib/index.js#L99 */
+    data: Data;
+}
+
 /* tslint:disable-next-line:no-empty-interface */
 export interface PluginsListRegistered {
 }
@@ -450,7 +492,7 @@ export interface Request extends Podium {
      * The response object when set. The object can be modified but must not be assigned another object. To replace the response with another from within an extension point, use reply(response) to
      * override with a different response. Contains null when no response has been set (e.g. when a request terminates prematurely when the client disconnects).
      */
-    response: ResponseObject | Boom.BoomError | null;
+    response: ResponseObject | BoomError | null;
 
     /**
      * Same as pre but represented as the response object created by the pre method.
@@ -3851,7 +3893,7 @@ export namespace Lifecycle {
     type ReturnValueTypes =
         (null | string | number | boolean) |
         (Buffer) |
-        (Error | Boom.BoomError) |
+        (Error | BoomError) |
         (stream.Stream) |
         (object | object[]) |
         symbol |
