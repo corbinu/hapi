@@ -14,5 +14,3 @@ config.json
 */*/._*
 coverage.*
 .settings
-package-lock.json
-
