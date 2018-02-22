@@ -1,4 +1,9 @@
-*
-!lib/**
-!.npmignore
-!types
+.github
+images
+test
+types/test
+.travis.yml
+API.md
+LICENSE
+SPONSORS.md
+tsconfig.json
